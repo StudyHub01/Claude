@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  name                 String
+  password             String
+  plan                 String    @default("starter")
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  createdAt            DateTime  @default(now())
+  clients              Client[]
+  projects             Project[]
+  invoices             Invoice[]
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects  Project[]
+  invoices  Invoice[]
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  userId       String
+  clientId     String
+  title        String
+  description  String?
+  status       String        @default("active")
+  deadline     DateTime?
+  portalToken  String        @unique @default(cuid())
+  createdAt    DateTime      @default(now())
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  deliverables Deliverable[]
+  messages     Message[]
+}
+
+model Deliverable {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  fileUrl   String?
+  fileType  String?
+  status    String   @default("pending")
+  feedback  String?
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id          String    @id @default(cuid())
+  userId      String
+  clientId    String
+  amount      Float
+  description String?
+  status      String    @default("draft")
+  dueDate     DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  projectId  String
+  senderType String
+  senderName String
+  content    String
+  createdAt  DateTime @default(now())
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
